@@ -1,0 +1,34 @@
+body {
+    background: #f8f9fa;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.list-group-item {
+    transition: background 0.2s;
+}
+
+.list-group-item:hover {
+    background: #e9ecef;
+}
+
+#preview img {
+    max-height: 100px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+#chat-messages .bg-primary {
+    border-radius: 12px 12px 0 12px;
+}
+
+#chat-messages .bg-light {
+    border-radius: 12px 12px 12px 0;
+    border: 1px solid #ddd;
+}
+
+#chat-messages small {
+    font-size: 0.75rem;
+}

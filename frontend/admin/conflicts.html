@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conflitos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/css/conflicts.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container mt-4">
+        <h1 class="h2 fw-bold mb-4">Gerenciar Conflitos</h1>
+
+        <div class="row g-4">
+         
+            <!-- List Reports -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Relatos</h5>
+                        <button class="btn btn-light btn-sm" id="refresh-btn">
+                            <i class="bi bi-arrow-clockwise"></i> Atualizar
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="relatos-lista" class="list-group list-group-flush"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div class="modal fade" id="chatModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chat-title"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body d-flex flex-column" style="height: 70vh;">
+                    <div id="chat-messages" class="flex-grow-1 overflow-auto mb-3"></div>
+                    <form id="message-form" class="d-flex gap-2">
+                        <textarea class="form-control" id="message-text" rows="2" placeholder="Escreva uma mensagem..."></textarea>
+                        <button type="submit" class="btn btn-primary align-self-end">Enviar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+   
+   
+    
+    <script type="module">
+        import { loadNavbar } from '/admin/components/navbar.js';
+        import { adicionarMensagem, listarRelatos, resolverRelato } from '/jsApiLayer/relato.js';
+
+        let currentRelatoId = null;
+        let chatModal = null;
+
+        loadNavbar();
+
+        async function loadRelatos() {
+            try {
+                const relatos = await listarRelatos();
+                const container = document.getElementById('relatos-lista');
+                container.innerHTML = '';
+                if (relatos.length === 0) {
+                    container.innerHTML = '<div class="p-4 text-center text-muted">Nenhum relato</div>';
+                    return;
+                }
+                relatos.forEach(r => {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item list-group-item-action';
+                    const statusBadge = r.status === 'aberto' 
+                        ? '<span class="badge bg-warning">Aberto</span>'
+                        : r.status === 'resolvido' ? '<span class="badge bg-success">Resolvido</span>'
+                        : '<span class="badge bg-secondary">Descartado</span>';
+                    item.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1 fw-bold">ID: ${r.id} - ${r.tipo}</h6>
+                                <p class="mb-1">${r.descricao}</p>
+                                <small class="text-muted">
+                                    Relator: ${r.relator?.apelido || 'N/A'}
+                                    ${r.relatado ? ` | Relatado: ${r.relatado.apelido}` : ''}
+                                </small>
+                            </div>
+                            ${statusBadge}
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-info btn-sm chat-btn me-2" data-id="${r.id}">Chat</button>
+                            <button class="btn btn-success btn-sm resolver-btn me-2" data-id="${r.id}" data-status="resolvido">Resolver</button>
+                            <button class="btn btn-secondary btn-sm resolver-btn" data-id="${r.id}" data-status="descartado">Descartar</button>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+
+                document.querySelectorAll('.chat-btn').forEach(btn => btn.onclick = () => openChat(btn.dataset.id));
+                document.querySelectorAll('.resolver-btn').forEach(btn => {
+                    btn.onclick = () => resolverHandler(btn.dataset.id, btn.dataset.status);
+                });
+            } catch (e) {
+                alert('Erro ao carregar relatos: ' + e.message);
+            }
+        }
+
+        async function openChat(relato_id) {
+            currentRelatoId = relato_id;
+            const relatos = await listarRelatos();
+            const relato = relatos.find(r => r.id == relato_id);
+
+            document.getElementById('chat-title').textContent = `Chat - Relato #${relato_id} (${relato.tipo})`;
+            const messagesDiv = document.getElementById('chat-messages');
+            messagesDiv.innerHTML = '';
+            relato.mensagens.forEach(m => {
+                const msg = document.createElement('div');
+                msg.className = `mb-3 ${m.autor.apelido === 'AdminMaster' ? 'text-end' : ''}`;
+                msg.innerHTML = `
+                    <div class="d-inline-block p-3 rounded ${m.autor.apelido === 'AdminMaster' ? 'bg-primary text-white' : 'bg-light'}">
+                        <strong>${m.autor.apelido}</strong><br>
+                        ${m.texto}
+                        <small class="d-block mt-1 opacity-75">${new Date(m.criado_em).toLocaleString()}</small>
+                    </div>
+                `;
+                messagesDiv.appendChild(msg);
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            if (!chatModal) {
+                chatModal = new bootstrap.Modal(document.getElementById('chatModal'));
+            }
+            chatModal.show();
+        }
+
+        document.getElementById('message-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const texto = document.getElementById('message-text').value.trim();
+            if (!texto || !currentRelatoId) return;
+            try {
+                await adicionarMensagem(currentRelatoId, texto);
+                document.getElementById('message-text').value = '';
+                openChat(currentRelatoId);
+            } catch (e) {
+                alert('Erro ao enviar mensagem: ' + e.message);
+            }
+        });
+
+        async function resolverHandler(id, status) {
+            const notas = prompt('Notas de resolução (opcional):');
+            try {
+                await resolverRelato(id, status, notas || null);
+                alert('Relato atualizado');
+                loadRelatos();
+            } catch (e) {
+                alert('Erro: ' + e.message);
+            }
+        }
+
+        document.getElementById('refresh-btn').onclick = loadRelatos;
+        loadRelatos();
+    </script>
+
+
+
+</body>
+</html>

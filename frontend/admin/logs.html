@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs - EcoAdmin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .page-title {
+            color: #495057;
+            margin-bottom: 2rem;
+        }
+        .log-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .log-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+        }
+        .btn-fetch {
+            background: #495057;
+            border: none;
+        }
+        .btn-fetch:hover {
+            background: #343a40;
+        }
+        .modal-header {
+            background: #495057;
+            color: white;
+        }
+        .table th {
+            background: #e9ecef;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+        pre {
+            background: #f1f3f5;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container mt-5">
+        <h1 class="page-title text-center fw-bold">Logs do Sistema</h1>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card log-card h-100 shadow-sm">
+                    <div class="card-header text-center">
+                        <i class="bi bi-truck fs-3"></i><br>Coletas
+                    </div>
+                    <div class="card-body text-center">
+                        <input type="number" class="form-control mb-3" id="coletas-id" placeholder="ID do usuário (opcional)">
+                        <button class="btn btn-fetch text-white w-100 fetch-btn" data-type="coletas">
+                            <i class="bi bi-list-ul me-2"></i>Listar Coletas
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card log-card h-100 shadow-sm">
+                    <div class="card-header text-center">
+                        <i class="bi bi-gift fs-3"></i><br>Resgates
+                    </div>
+                    <div class="card-body text-center">
+                        <input type="number" class="form-control mb-3" id="resgates-id" placeholder="ID do usuário (opcional)">
+                        <button class="btn btn-fetch text-white w-100 fetch-btn" data-type="resgates">
+                            <i class="bi bi-list-ul me-2"></i>Listar Resgates
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card log-card h-100 shadow-sm">
+                    <div class="card-header text-center">
+                        <i class="bi bi-arrow-left-right fs-3"></i><br>Transações
+                    </div>
+                    <div class="card-body text-center">
+                        <input type="number" class="form-control mb-3" id="transacoes-id" placeholder="ID do usuário (opcional)">
+                        <button class="btn btn-fetch text-white w-100 fetch-btn" data-type="transacoes">
+                            <i class="bi bi-list-ul me-2"></i>Listar Transações
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card log-card h-100 shadow-sm">
+                    <div class="card-header text-center">
+                        <i class="bi bi-shield-lock fs-3"></i><br>Logs Admin
+                    </div>
+                    <div class="card-body text-center">
+                        <input type="number" class="form-control mb-3" id="admin-id" placeholder="ID do admin (opcional)">
+                        <button class="btn btn-fetch text-white w-100 fetch-btn" data-type="admin">
+                            <i class="bi bi-list-ul me-2"></i>Listar Logs Admin
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="logModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-title"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle" id="log-table">
+                            <thead id="table-head" class="table-dark"></thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module">
+        import { loadNavbar } from '/admin/components/navbar.js';
+        import {
+            listarColetas,
+            listarResgates,
+            listarTransacoes,
+            listarLogsAdmin
+        } from '/jsApiLayer/logs.js';
+
+        loadNavbar();
+
+        async function fetchLog(type) {
+            const idMap = {
+                coletas: 'coletas-id',
+                resgates: 'resgates-id',
+                transacoes: 'transacoes-id',
+                admin: 'admin-id'
+            };
+            const usuario_id = getId(idMap[type]);
+
+            let data;
+            try {
+                switch (type) {
+                    case 'coletas': data = await listarColetas(usuario_id, false); break;
+                    case 'resgates': data = await listarResgates(usuario_id, false); break;
+                    case 'transacoes': data = await listarTransacoes(usuario_id, false); break;
+                    case 'admin': data = await listarLogsAdmin(usuario_id); break;
+                }
+            } catch (e) {
+                alert('Erro: ' + e.message);
+                return;
+            }
+
+            document.getElementById('modal-title').textContent = `Logs - ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+
+            const thead = document.getElementById('table-head');
+            const tbody = document.getElementById('table-body');
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td class="text-center text-muted py-4">Nenhum registro encontrado</td></tr>';
+            } else {
+                const keys = Object.keys(data[0]);
+                const headerRow = document.createElement('tr');
+                keys.forEach(k => {
+                    const th = document.createElement('th');
+                    th.textContent = k;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    keys.forEach(k => {
+                        const td = document.createElement('td');
+                        const value = row[k];
+                        if (typeof value === 'object' && value !== null) {
+                            td.innerHTML = `<pre class="mb-0">${JSON.stringify(value, null, 2)}</pre>`;
+                        } else {
+                            td.textContent = value ?? '';
+                        }
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+            }
+
+            new bootstrap.Modal(document.getElementById('logModal')).show();
+        }
+
+        function getId(inputId) {
+            const val = document.getElementById(inputId)?.value.trim();
+            return val ? parseInt(val) : null;
+        }
+
+        document.querySelectorAll('.fetch-btn').forEach(btn => {
+            btn.addEventListener('click', () => fetchLog(btn.dataset.type));
+        });
+    </script>
+</body>
+</html>

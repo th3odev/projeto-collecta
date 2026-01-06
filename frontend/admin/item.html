@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Itens - Teste</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        .modal-body img { max-width: 100%; height: auto; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Itens Disponíveis</h1>
+        <p><a href="index.html">Login</a> | <a href="dashboard.html">Dashboard Admin</a> | <a href="conflicts.html">Conflitos</a> | <a href="recompensa.html">Recompensas</a></p>
+
+        <div class="mb-3">
+            <button id="refresh-btn" class="btn btn-secondary">Atualizar Lista</button>
+        </div>
+
+        <div id="itens-lista"></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-title"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module">
+        import { listarItens, coletarItem } from '/jsApiLayer/item.js';
+
+        const BASE_URL = window.location.origin;
+
+        async function loadItens() {
+            try {
+                const itens = await listarItens();
+                const container = document.getElementById('itens-lista');
+                container.innerHTML = '';
+                itens.forEach(i => {
+                    const card = document.createElement('div');
+                    card.className = 'card mb-3';
+                    card.style.cursor = 'pointer';
+                    card.addEventListener('click', () => showDetail(i));
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <h5 class="card-title">${i.titulo}</h5>
+                            <p class="card-text"><strong>Categoria:</strong> ${i.categoria} / ${i.subcategoria}</p>
+                            <p class="card-text"><strong>Condição:</strong> ${i.condicao} | <strong>Status:</strong> ${i.status}</p>
+                            ${i.descricao ? `<p class="card-text">${i.descricao.substring(0, 100)}...</p>` : ''}
+                            <button class="btn btn-success btn-sm mt-2 coletar-btn" data-id="${i.id}" ${i.status !== 'disponivel' ? 'disabled' : ''}>
+                                Coletar Item
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+                document.querySelectorAll('.coletar-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        coletarHandler(btn.dataset.id);
+                    });
+                });
+            } catch (e) {
+                alert('Erro: ' + e.message);
+            }
+        }
+
+        async function coletarHandler(item_id) {
+            if (!confirm('Confirmar coleta deste item?')) return;
+            try {
+                await coletarItem(item_id);
+                alert('Item coletado com sucesso!');
+                loadItens();
+            } catch (e) {
+                alert('Erro: ' + e.message);
+            }
+        }
+
+        function showDetail(item) {
+            document.getElementById('modal-title').textContent = item.titulo;
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `
+                <p><strong>Descrição:</strong> ${item.descricao || 'Sem descrição'}</p>
+                <p><strong>Categoria:</strong> ${item.categoria} / ${item.subcategoria}</p>
+                <p><strong>Condição:</strong> ${item.condicao}</p>
+                <p><strong>Instruções:</strong> ${item.instrucoes_coleta || 'Nenhuma'}</p>
+                <p><strong>Endereço:</strong> ${item.cep} - ${item.endereco} (${item.referencia})</p>
+                <p><strong>Status:</strong> ${item.status}</p>
+                ${item.url_imagens.length ? '<p><strong>Imagens:</strong></p>' : ''}
+                ${item.url_imagens.map(url => `<img src="${BASE_URL}/images/${url}" alt="Item">`).join('')}
+            `;
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
+        }
+
+        document.getElementById('refresh-btn').addEventListener('click', loadItens);
+
+        if (localStorage.getItem('token')) loadItens();
+        else location.href = 'index.html';
+    </script>
+</body>
+</html>

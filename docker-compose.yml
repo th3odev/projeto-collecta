@@ -1,0 +1,74 @@
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dbname
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d dbname"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: ./backend
+    restart: always
+    command: >
+      sh -c "
+      python wait_for_db.py &&
+      ([ -f alembic/script.py.mako ] || alembic init alembic) &&
+      alembic revision --autogenerate -m 'auto' || true &&
+      alembic upgrade head &&
+      gunicorn --bind 0.0.0.0:5000 app:app --workers 4
+      "
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/dbname
+      JWT_SECRET_KEY: sua-chave-secreta-muito-longa-e-segura
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/uploads
+
+  collecta:
+    build:
+      context: ./frontend/collecta
+      dockerfile: Dockerfile
+    volumes:
+      - collecta_dist:/usr/share/nginx/html/collecta
+
+  frontend:
+    image: nginx:alpine
+    restart: always
+    volumes:
+      - ./frontend/admin:/usr/share/nginx/html/admin:ro
+      - ./frontend/jsApiLayer:/usr/share/nginx/html/jsApiLayer:ro
+      - collecta_dist:/usr/share/nginx/html/collecta:ro
+      - ./frontend/nginx-internal.conf:/etc/nginx/conf.d/default.conf:ro
+    expose:
+      - "80"
+    depends_on:
+      - collecta
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs/origin.crt:/etc/ssl/origin.crt:ro
+      - ./certs/origin.key:/etc/ssl/origin.key:ro
+      - ./uploads:/uploads:ro
+    depends_on:
+      - app
+      - frontend
+
+volumes:
+  postgres_data:
+  collecta_dist:
