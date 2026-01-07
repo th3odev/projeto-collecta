@@ -131,12 +131,12 @@ export default function Navbar() {
               alt="Collecta"
               onClick={() => navigate("/")}
               className="
-      h-16
-      max-h-full
-      w-auto
-      cursor-pointer
-      object-contain
-    "
+                      h-12
+                     max-h-full
+                    w-auto
+                     cursor-pointer
+                      object-contain
+                    "
             />
           </div>
 
