@@ -6,3 +6,4 @@ alembic
 passlib
 gunicorn
 flask_cors
+bcrypt
