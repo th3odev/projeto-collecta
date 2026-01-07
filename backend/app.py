@@ -25,18 +25,23 @@ DATABASE_URL = os.getenv(
     "postgresql://user:password@localhost:5432/dbname"
 )
 
+# =========================
+# JWT
+# =========================
+
 jwt = JWTManager(app)
 
 # =========================
 # CORS (Vercel / Local)
 # =========================
-# Exemplo produção:
-# CORS_ORIGINS=https://projeto-collecta.vercel.app
 
 CORS(
     app,
     supports_credentials=True,
-    origins=os.getenv("CORS_ORIGINS", "*").split(",")
+    origins=os.getenv(
+        "CORS_ORIGINS",
+        "https://projeto-collecta.vercel.app,http://localhost:5173"
+    ).split(",")
 )
 
 # =========================
@@ -54,8 +59,6 @@ Session = scoped_session(SessionFactory)
 # =========================
 # Criar tabelas (MVP)
 # =========================
-# Para MVP / Render free OK
-# Depois Alembic assume 100%
 
 from models import Base
 Base.metadata.create_all(bind=engine)
@@ -82,9 +85,8 @@ def teardown_request(exception=None):
             Session.remove()
 
 # =========================
-# Seed / Mock data (CONTROLADO)
+# Seed / Mock data
 # =========================
-# Roda APENAS se RUN_SEED=true
 
 if os.getenv("RUN_SEED") == "true":
     try:
@@ -96,7 +98,7 @@ if os.getenv("RUN_SEED") == "true":
         print("❌ Erro ao rodar seed:", e)
 
 # =========================
-# Blueprints
+# Blueprints (TODOS com /api)
 # =========================
 
 from routes.user import user_bp
@@ -107,13 +109,13 @@ from routes.images import images_bp
 from routes.item import item_bp
 from routes.logs import logs_bp
 
-app.register_blueprint(user_bp)
-app.register_blueprint(auth_bp)
-app.register_blueprint(relato_bp)
-app.register_blueprint(recompensa_bp)
-app.register_blueprint(images_bp)
-app.register_blueprint(item_bp)
-app.register_blueprint(logs_bp)
+app.register_blueprint(auth_bp, url_prefix="/api/auth")
+app.register_blueprint(user_bp, url_prefix="/api/user")
+app.register_blueprint(relato_bp, url_prefix="/api/relato")
+app.register_blueprint(recompensa_bp, url_prefix="/api/recompensa")
+app.register_blueprint(images_bp, url_prefix="/api/images")
+app.register_blueprint(item_bp, url_prefix="/api/item")
+app.register_blueprint(logs_bp, url_prefix="/api/logs")
 
 # =========================
 # Health check (Render)

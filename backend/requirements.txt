@@ -4,6 +4,6 @@ psycopg2-binary
 flask-jwt-extended
 alembic
 passlib
-gunicorn
-flask_cors
 bcrypt
+flask-cors
+gunicorn
