@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { login as apiLogin } from "/jsApiLayer/auth.js";
-import { getMe } from "/jsApiLayer/user.js";
+import * as authApi from "/jsApiLayer/auth.js";
 
 const AuthContext = createContext(null);
 
@@ -10,7 +9,7 @@ function normalizeUser(apiUser) {
 
   return {
     ...apiUser,
-    pontos: apiUser.pontos_atuais ?? 0, // chave correta
+    pontos: apiUser.pontos ?? apiUser.pontos_atuais ?? 0,
   };
 }
 
@@ -21,26 +20,21 @@ export function AuthProvider({ children }) {
   const isAuthenticated = !!user;
 
   /**
-   * 🔐 Login
+   * 🔐 LOGIN
+   * authApi.login já:
+   * - faz /auth/login
+   * - salva token
+   * - faz /auth/me
+   * - retorna o usuário
    */
   async function login(loginValue, senha) {
     setLoading(true);
-
     try {
-      const data = await apiLogin(loginValue, senha);
-      const token = data?.token || data?.access_token;
-
-      if (!token) {
-        throw new Error("Token não retornado pelo backend");
-      }
-
-      localStorage.setItem("token", token);
-
-      const me = await getMe();
+      const me = await authApi.login(loginValue, senha);
       setUser(normalizeUser(me));
+      return me;
     } catch (err) {
       console.error("Erro no login:", err);
-      localStorage.removeItem("token");
       setUser(null);
       throw err;
     } finally {
@@ -49,44 +43,52 @@ export function AuthProvider({ children }) {
   }
 
   /**
-   * lgout
+   * 🚪 LOGOUT
    */
   function logout() {
-    localStorage.removeItem("token");
+    authApi.logout();
     setUser(null);
-    window.location.href = "/collecta/";
   }
 
   /**
-   * atualiza dados do usuário (/me)
-   * usar após ganhar pontos, resgatar item, etc
+   * 🔄 Atualiza dados do usuário
    */
   async function refreshUser() {
     try {
-      const me = await getMe();
-      setUser(normalizeUser(me));
+      const me = (await authApi.getMe) ? await authApi.getMe() : null;
+
+      if (me) {
+        setUser(normalizeUser(me));
+      }
     } catch (err) {
       console.error("Falha ao atualizar usuário (/me)", err);
     }
   }
 
   /**
-   * inicialização da auth
+   * 🔁 INIT AUTH (refresh page)
    */
   useEffect(() => {
     async function initAuth() {
       const token = localStorage.getItem("token");
-
       if (!token) {
         setLoading(false);
         return;
       }
 
       try {
-        const me = await getMe();
-        setUser(normalizeUser(me));
-      } catch (err) {
-        console.error("Falha ao validar sessão", err);
+        // reaproveita o /auth/me do auth.js
+        const me = (await authApi.login)
+          ? await authApi.login(null, null) // não faz sentido aqui
+          : null;
+
+        // ⚠️ NÃO chamamos login aqui
+        // apenas carregamos user já salvo
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          setUser(normalizeUser(JSON.parse(storedUser)));
+        }
+      } catch {
         localStorage.removeItem("token");
         setUser(null);
       } finally {
@@ -94,7 +96,12 @@ export function AuthProvider({ children }) {
       }
     }
 
-    initAuth();
+    // initAuth corrigido
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(normalizeUser(JSON.parse(storedUser)));
+    }
+    setLoading(false);
   }, []);
 
   return (
@@ -115,10 +122,8 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-
   if (!ctx) {
     throw new Error("useAuth deve ser usado dentro de <AuthProvider />");
   }
-
   return ctx;
 }
