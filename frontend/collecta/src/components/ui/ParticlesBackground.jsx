@@ -32,7 +32,7 @@ export default function ParticlesBackground() {
           },
         },
         color: {
-          value: "#55aa96",
+          value: "#0D9488",
         },
         shape: {
           type: "star",
@@ -47,7 +47,7 @@ export default function ParticlesBackground() {
         line_linked: {
           enable: true,
           distance: 150,
-          color: "#6ea799",
+          color: "#0D8388",
           opacity: 0.3,
           width: 1,
         },
