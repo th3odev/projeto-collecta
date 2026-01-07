@@ -131,7 +131,7 @@ export default function Navbar() {
               alt="Collecta"
               onClick={() => navigate("/")}
               className="
-      h-8 
+      h-16
       max-h-full
       w-auto
       cursor-pointer
