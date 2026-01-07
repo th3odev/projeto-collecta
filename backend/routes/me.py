@@ -1,15 +1,18 @@
+# routes/user.py
+
 from flask import Blueprint, jsonify, g
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import Usuario
 
-auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+user_bp = Blueprint("user", __name__, url_prefix="/user")
 
-@auth_bp.route("/me", methods=["GET"])
+@user_bp.route("/me", methods=["GET"])
 @jwt_required()
 def me():
     user_id = get_jwt_identity()
 
-    usuario = g.db.query(Usuario).filter(Usuario.id == user_id).one_or_none()
+    usuario = g.db.query(Usuario).filter(Usuario.id == user_id).first()
+
     if not usuario:
         return jsonify({"error": "Usuário não encontrado"}), 404
 
@@ -19,5 +22,7 @@ def me():
         "email": usuario.email,
         "apelido": usuario.apelido,
         "papel": usuario.papel.value,
-        "status": usuario.status
+        "status": usuario.status,
+        "pontos": usuario.pontos_atuais,
+        "itens_coletados": usuario.itens_coletados,
     })
