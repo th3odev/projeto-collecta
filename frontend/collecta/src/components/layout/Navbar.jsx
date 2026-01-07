@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 
-import logo from "../../assets/logos/logo.svg";
+import logo from "../../assets/logos/logo_menu.png";
 import starIcon from "../../assets/icons/star_white.svg";
 import bellIcon from "../../assets/icons/notification.svg";
 import userIcon from "../../assets/icons/user.svg";
