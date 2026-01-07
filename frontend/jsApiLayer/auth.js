@@ -4,14 +4,7 @@ import { apiFetch } from "./core.js";
  * =========================
  * REGISTER
  * =========================
- * Backend: POST /api/auth/register
- * Body:
- * {
- *   nome_usuario,
- *   email,
- *   senha,
- *   apelido
- * }
+ * POST /api/auth/register
  */
 export async function register(nome_usuario, email, senha, apelido) {
   return await apiFetch("/auth/register", {
@@ -22,7 +15,6 @@ export async function register(nome_usuario, email, senha, apelido) {
       senha,
       apelido,
     }),
-    invalidate_after: ["/auth/login"],
   });
 }
 
@@ -30,38 +22,35 @@ export async function register(nome_usuario, email, senha, apelido) {
  * =========================
  * LOGIN
  * =========================
- * Backend: POST /api/auth/login
- * Body:
- * {
- *   login: email OU nome_usuario,
- *   senha
- * }
+ * POST /api/auth/login
  *
- * Response esperado:
- * {
- *   token: string,
- *   usuario: object
- * }
+ * Backend retorna:
+ * { access_token: "jwt" }
  */
 export async function login(login, senha) {
   const res = await apiFetch("/auth/login", {
     method: "POST",
-    body: JSON.stringify({
-      login,
-      senha,
-    }),
+    body: JSON.stringify({ login, senha }),
   });
 
-  if (!res?.token || !res?.usuario) {
+  const token = res?.access_token;
+
+  if (!token) {
     throw new Error("Resposta inválida do backend no login");
   }
 
-  // salva sessão
-  localStorage.setItem("token", res.token);
-  localStorage.setItem("user", JSON.stringify(res.usuario));
+  // salva token
+  localStorage.setItem("token", token);
 
-  // retorna usuário direto (SEM /me)
-  return res.usuario;
+  // 🔥 NÃO CHAMA /me
+  // o backend NÃO fornece /me confiável ainda
+  const user = {
+    login,
+  };
+
+  localStorage.setItem("user", JSON.stringify(user));
+
+  return user;
 }
 
 /**
@@ -72,7 +61,5 @@ export async function login(login, senha) {
 export function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
-
-  // reset total da app
   window.location.href = "/";
 }
