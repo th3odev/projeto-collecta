@@ -125,12 +125,18 @@ export default function Navbar() {
       <header className="fixed top-0 left-0 w-full z-50 bg-[#090A0D] border-b border-white/10">
         <nav className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between md:grid md:grid-cols-3">
           {/* LOGO */}
-          <div className="flex items-center">
+          <div className="flex items-center h-full">
             <img
               src={logo}
               alt="Collecta"
-              className="cursor-pointer"
               onClick={() => navigate("/")}
+              className="
+      h-8 
+      max-h-full
+      w-auto
+      cursor-pointer
+      object-contain
+    "
             />
           </div>
 
