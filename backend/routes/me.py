@@ -1,23 +1,23 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, g
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from extensions.db import db
-from models.pontos import PontoTransacao
+from models import Usuario
 
-me_bp = Blueprint("me", __name__)
+auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
-@me_bp.route("/me/points", methods=["GET"])
+@auth_bp.route("/me", methods=["GET"])
 @jwt_required()
-def meus_pontos():
+def me():
     user_id = get_jwt_identity()
 
-    ganhos = db.session.query(
-        db.func.coalesce(db.func.sum(PontoTransacao.valor), 0)
-    ).filter_by(usuario_id=user_id, tipo="ganho").scalar()
-
-    gastos = db.session.query(
-        db.func.coalesce(db.func.sum(PontoTransacao.valor), 0)
-    ).filter_by(usuario_id=user_id, tipo="gasto").scalar()
+    usuario = g.db.query(Usuario).filter(Usuario.id == user_id).one_or_none()
+    if not usuario:
+        return jsonify({"error": "Usuário não encontrado"}), 404
 
     return jsonify({
-        "pontos": ganhos - gastos
+        "id": usuario.id,
+        "nome_usuario": usuario.nome_usuario,
+        "email": usuario.email,
+        "apelido": usuario.apelido,
+        "papel": usuario.papel.value,
+        "status": usuario.status
     })
