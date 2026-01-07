@@ -15,20 +15,22 @@ app = Flask(__name__)
 # Configurações via ENV
 # =========================
 
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
+app.config["JWT_SECRET_KEY"] = os.getenv(
+    "JWT_SECRET_KEY",
+    "dev-secret-key"
+)
+
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql://user:password@localhost:5432/dbname"
 )
 
-app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
 jwt = JWTManager(app)
 
 # =========================
-# CORS (Render + Vercel)
+# CORS (Vercel / Local)
 # =========================
-# Controlado por variável de ambiente
-# Exemplo em produção:
+# Exemplo produção:
 # CORS_ORIGINS=https://projeto-collecta.vercel.app
 
 CORS(
@@ -52,8 +54,8 @@ Session = scoped_session(SessionFactory)
 # =========================
 # Criar tabelas (MVP)
 # =========================
-# Para o MVP no Render free, isso é aceitável.
-# Em produção maior, Alembic assume totalmente.
+# Para MVP / Render free OK
+# Depois Alembic assume 100%
 
 from models import Base
 Base.metadata.create_all(bind=engine)
@@ -80,17 +82,18 @@ def teardown_request(exception=None):
             Session.remove()
 
 # =========================
-# Seed / Mock data (SÓ LOCAL)
+# Seed / Mock data (CONTROLADO)
 # =========================
+# Roda APENAS se RUN_SEED=true
 
-if os.getenv("FLASK_ENV") != "production":
+if os.getenv("RUN_SEED") == "true":
     try:
         from db_init import init_mock_data
-        print("Running mock data (non-production)")
+        print("🚀 RUN_SEED=true → populando banco")
         init_mock_data(Session)
-        print("Mock data finished")
+        print("✅ Seed finalizado")
     except Exception as e:
-        print("Mock data skipped:", e)
+        print("❌ Erro ao rodar seed:", e)
 
 # =========================
 # Blueprints
