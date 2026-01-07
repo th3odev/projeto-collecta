@@ -1,4 +1,3 @@
-// jsapi-bridge.js
 import * as auth from "/jsApiLayer/auth.js";
 import * as user from "/jsApiLayer/user.js";
 import * as item from "/jsApiLayer/item.js";
