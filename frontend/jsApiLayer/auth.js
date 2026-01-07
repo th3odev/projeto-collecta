@@ -5,6 +5,13 @@ import { apiFetch } from "./core.js";
  * REGISTER
  * =========================
  * Backend: POST /api/auth/register
+ * Body:
+ * {
+ *   nome_usuario,
+ *   email,
+ *   senha,
+ *   apelido
+ * }
  */
 export async function register(nome_usuario, email, senha, apelido) {
   return await apiFetch("/auth/register", {
@@ -24,14 +31,19 @@ export async function register(nome_usuario, email, senha, apelido) {
  * LOGIN
  * =========================
  * Backend: POST /api/auth/login
- * Body esperado pelo backend:
+ * Body:
  * {
  *   login: email OU nome_usuario,
- *   senha: string
+ *   senha
+ * }
+ *
+ * Response esperado:
+ * {
+ *   token: string,
+ *   usuario: object
  * }
  */
 export async function login(login, senha) {
-  // 1️⃣ login → token
   const res = await apiFetch("/auth/login", {
     method: "POST",
     body: JSON.stringify({
@@ -40,21 +52,16 @@ export async function login(login, senha) {
     }),
   });
 
-  if (!res?.token) {
-    throw new Error("Token não retornado pelo backend");
+  if (!res?.token || !res?.usuario) {
+    throw new Error("Resposta inválida do backend no login");
   }
 
-  // 2️⃣ salva token
+  // salva sessão
   localStorage.setItem("token", res.token);
+  localStorage.setItem("user", JSON.stringify(res.usuario));
 
-  // 3️⃣ carrega usuário logado
-  const me = await apiFetch("/auth/me", {
-    force_ignore_cache: true,
-  });
-
-  localStorage.setItem("user", JSON.stringify(me));
-
-  return me;
+  // retorna usuário direto (SEM /me)
+  return res.usuario;
 }
 
 /**
@@ -66,6 +73,6 @@ export function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
 
-  // força reset total do estado
+  // reset total da app
   window.location.href = "/";
 }
