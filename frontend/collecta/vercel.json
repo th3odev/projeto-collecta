@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://projeto-collecta-api.onrender.com/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://projeto-collecta-api.onrender.com/:path*"
     }
   ]
 }
