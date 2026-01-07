@@ -1,12 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/jsApiLayer/:path*",
-      "destination": "/frontend/jsApiLayer/:path*"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "https://projeto-collecta-api.onrender.com/:path*"
+      "source": "/api/(.*)",
+      "destination": "https://projeto-collecta-api.onrender.com/api/$1"
     }
   ]
 }
