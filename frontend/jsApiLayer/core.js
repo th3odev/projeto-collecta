@@ -1,4 +1,4 @@
-const API_BASE = "https://viniciusbarroscanonico.com/api";
+const API_BASE = "/api"; //'https://viniciusbarroscanonico.com/api';
 const CACHE_TTL = 10 * 1000; // 10 seconds
 const VERBOSE = true;
 
