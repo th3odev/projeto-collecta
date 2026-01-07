@@ -6,54 +6,56 @@ from flask_cors import CORS
 import os
 
 # =========================
-# App + Config básica
+# App
 # =========================
 
 app = Flask(__name__)
 
-app.config["JWT_SECRET_KEY"] = os.getenv(
-    "JWT_SECRET_KEY",
-    "fallback-secret-key-dev-only"
+# =========================
+# Configurações via ENV
+# =========================
+
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://user:password@localhost:5432/dbname"
 )
 
+app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
 jwt = JWTManager(app)
 
 # =========================
-# CORS (frontend + local)
+# CORS (Render + Vercel)
 # =========================
+# Controlado por variável de ambiente
+# Exemplo em produção:
+# CORS_ORIGINS=https://projeto-collecta.vercel.app
 
 CORS(
     app,
-    origins=[
-        "https://viniciusbarroscanonico.com",
-        "https://www.viniciusbarroscanonico.com",
-        "https://localhost:*",
-        "http://localhost:*",
-        "https://127.0.0.1:*",
-        "http://127.0.0.1:*"
-    ],
-    supports_credentials=True
+    supports_credentials=True,
+    origins=os.getenv("CORS_ORIGINS", "*").split(",")
 )
 
 # =========================
 # Banco de dados
 # =========================
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://user:password@localhost:5432/dbname"
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True
 )
 
-engine = create_engine(DATABASE_URL)
 SessionFactory = sessionmaker(bind=engine)
 Session = scoped_session(SessionFactory)
 
 # =========================
-# Criar tabelas (MVP / produção simples)
+# Criar tabelas (MVP)
 # =========================
+# Para o MVP no Render free, isso é aceitável.
+# Em produção maior, Alembic assume totalmente.
 
 from models import Base
-
 Base.metadata.create_all(bind=engine)
 
 # =========================
@@ -78,7 +80,7 @@ def teardown_request(exception=None):
             Session.remove()
 
 # =========================
-# Seed / Mock data (APENAS LOCAL)
+# Seed / Mock data (SÓ LOCAL)
 # =========================
 
 if os.getenv("FLASK_ENV") != "production":
@@ -88,7 +90,7 @@ if os.getenv("FLASK_ENV") != "production":
         init_mock_data(Session)
         print("Mock data finished")
     except Exception as e:
-        print("Mock data skipped due to error:", e)
+        print("Mock data skipped:", e)
 
 # =========================
 # Blueprints
@@ -119,8 +121,9 @@ def health():
     return {"status": "ok"}, 200
 
 # =========================
-# Local run
+# Run (local / Render)
 # =========================
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
