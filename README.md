@@ -1,19 +1,37 @@
 # COLLECTA | Plataforma de Coleta Gamificada
 
-![Static Badge](https://img.shields.io/badge/STATUS-MVP%20FUNCIONAL-success)
+![Static Badge](https://img.shields.io/badge/STATUS-MVP%20local%20funcional%20%7C%20Deploy%20cloud%20em%20ajuste-yellow)
 
 ---
 
 ## Objetivo do Projeto
 
-O **Collecta** foi desenvolvido como um **MVP funcional** para a **terceira fase do programa MoviTalent**, com foco em validar uma solução digital baseada em economia circular, gamificação e reaproveitamento urbano.
+O **Collecta** foi desenvolvido como um **MVP funcional** para a **terceira fase do programa MoviTalent**, com foco em validar uma solução digital baseada em **economia circular**, **gamificação** e **reaproveitamento urbano**.
 
-Os principais objetivos técnicos e conceituais foram:
+Os principais objetivos técnicos e conceituais do projeto foram:
 
 - Implementar o fluxo completo de **catalogação → coleta → pontuação**
 - Garantir separação clara entre **frontend**, **backend** e **camada de API**
-- Trabalhar uma arquitetura **escalável, reutilizável e orientada a times**
+- Trabalhar uma arquitetura **modular, reutilizável e orientada a times**
 - Construir uma interface simples, objetiva e funcional para usuários finais
+
+---
+
+## Status Atual do Projeto (Importante)
+
+> ⚠️ **Aviso de transparência técnica**
+
+O Collecta encontra-se atualmente no seguinte estado:
+
+- ✅ **MVP totalmente funcional em ambiente local via Docker Compose** Dentro do diretório local_funcional
+- ⚠️ **Deploy em nuvem (Render + Vercel) em fase de adaptação técnica** Alterações no collecta para um deploy online para visualização ainda em andamento, tanto que a vercel atual está com bugs.
+- ❌ Ainda **não considerado pronto para produção cloud**
+
+A arquitetura original do projeto foi pensada para **execução orquestrada via Docker**, com múltiplos serviços (API, frontend, proxy, volumes, banco).
+
+Durante o processo de deploy online, foram identificadas **diferenças relevantes entre o ambiente Docker local e o modelo de execução serverless / PaaS**, exigindo refatorações e ajustes adicionais que ainda estão em andamento.
+
+👉 **Isso não invalida o MVP**, mas reforça que o projeto está sendo **adaptado para ambientes cloud modernos**.
 
 ---
 
@@ -23,24 +41,22 @@ O projeto teve início **antes do código**, a partir da definição de conceito
 
 ### Conceito
 
-A ideia proposta pelo programa era transformar a **coleta de itens reutilizáveis** em uma experiência: colaborativa, sustentável, motivadora e gamificada.
+A proposta foi transformar a **coleta de itens reutilizáveis** em uma experiência **colaborativa, sustentável, motivadora e gamificada**.
 
-Para isso, adotei um **sistema de pontuação baseado em estrelas**, onde cada ação positiva dentro da plataforma gera pontuações.
+Para isso, foi adotado um **sistema de pontuação baseado em estrelas**, onde cada ação positiva dentro da plataforma gera reconhecimento.
 
 ### Gamificação
 
-- Pontos foram representados como **estrelas**, reforçando sensação de progresso
-- Coletar itens gera pontuação imediata
-- Resgatar recompensas consome estrelas, criando equilíbrio no sistema
-- Histórico de atividades reforça feedback constante ao usuário ótima para a UX.
-
-Essa abordagem busca incentivar engajamento sem complexidade excessiva.
+- Pontos representados como **estrelas**
+- Coleta de itens gera pontuação imediata
+- Recompensas consomem estrelas, criando equilíbrio
+- Histórico de atividades reforça feedback contínuo ao usuário
 
 ---
 
 ## Prototipação e Design (Figma)
 
-Todo o fluxo do Collecta foi **prototipado integralmente no Figma** antes da implementação final.
+Todo o fluxo do Collecta foi **prototipado integralmente no Figma** antes da implementação.
 
 ### Processo adotado:
 
@@ -49,37 +65,35 @@ Todo o fluxo do Collecta foi **prototipado integralmente no Figma** antes da imp
 3. Evolução para **protótipo de média/alta fidelidade**
 4. Implementação no código com ajustes finos direto no frontend
 
-Grande parte das decisões de UI/UX partiram do protótipo, enquanto ajustes finais foram feitos diretamente no código para melhorar responsividade e fluidez.
-
 **Protótipo completo no Figma:**  
 👉 https://www.figma.com/design/TgmWKhC40urAKFvv45KEHn/collecta
 
 ---
 
-## Funcionalidades Implementadas (Status Atual)
+## Funcionalidades Implementadas (MVP Local)
 
 ### Core System
 
-- **Autenticação:** Login e sessão persistente via backend próprio.
+- **Autenticação:** Login e sessão persistente via backend próprio (JWT)
 - **Catalogação de Itens:**
-  - Criação de itens com título, descrição, categoria, condição e imagens.
-  - Upload de múltiplas imagens.
+  - Criação de itens com título, descrição, categoria e condição
+  - Upload de múltiplas imagens
 - **Coleta de Itens:**
-  - Usuários podem coletar itens disponíveis.
-  - Atualização de status do item.
+  - Usuários podem coletar itens disponíveis
+  - Atualização de status do item
 - **Sistema de Pontos:**
-  - Pontos ganhos por coleta.
-  - Pontos gastos ao resgatar recompensas.
+  - Pontos ganhos por coleta
+  - Pontos gastos ao resgatar recompensas
 - **Histórico de Atividades:**
-  - Registro de coletas e resgates com saldo de pontos.
+  - Registro de coletas e resgates
 
 ---
 
-### Interface (Frontend)
+## Interface (Frontend)
 
-- **Catálogo de Itens:** Listagem com cards e navegação.
+- **Catálogo de Itens:** Listagem com cards e navegação
 - **Detalhe do Item:**
-  - Galeria de imagem
+  - Galeria de imagens
   - Informações completas
   - Ações de coleta
 - **Perfil do Usuário:**
@@ -87,7 +101,7 @@ Grande parte das decisões de UI/UX partiram do protótipo, enquanto ajustes fin
   - Histórico de atividades
 - **Catalogar Item:**
   - Formulário simples e objetivo
-  - Upload visual de imagens com remoção individual
+  - Upload visual de imagens
 - **Navbar Responsiva:**
   - Desktop e Mobile
   - Menus contextuais por autenticação
@@ -98,7 +112,7 @@ Grande parte das decisões de UI/UX partiram do protótipo, enquanto ajustes fin
 
 O Collecta segue uma estética focada em clareza e funcionalidade:
 
-- Dark Mode como padrão intensifica a sensação de gamificação
+- Dark Mode como padrão
 - Interface limpa e sem ruído visual
 - Foco em legibilidade e ações diretas
 
@@ -115,15 +129,15 @@ O Collecta segue uma estética focada em clareza e funcionalidade:
 
 O backend foi estruturado para suportar:
 
-- Itens
 - Usuários
+- Itens
 - Coletas
 - Logs de transações
 - Sistema de pontuação
 
 ---
 
-## Infraestrutura
+## Infraestrutura (Ambiente Local)
 
 - **Docker + Docker Compose**
 - **Nginx** como proxy reverso
@@ -131,7 +145,9 @@ O backend foi estruturado para suportar:
   - API
   - Frontend
   - Assets estáticos
-- Ambiente preparado para produção ou staging
+- Ambiente preparado para **desenvolvimento e testes integrados**
+
+> O modelo de infraestrutura cloud está sendo reavaliado para melhor compatibilidade com serviços PaaS.
 
 ---
 
@@ -158,21 +174,15 @@ Um dos pilares do projeto é o uso de uma **camada de API desacoplada**, chamada
 
 ### Créditos Importantes
 
-> O **jsApiLayer** e o **Admin** foram completamente desenvolvidos por  
+> O **jsApiLayer** e o **Admin** foram desenvolvidos por  
 > **[@Vinicius-b-Canonico](https://github.com/Vinicius-b-Canonico)**  
 > e são utilizados neste projeto **sem modificações**, respeitando sua arquitetura original.
-
-Essa decisão garante:
-
-- Consistência entre aplicações
-- Facilidade de manutenção
-- Escalabilidade do ecossistema
 
 ---
 
 ## Nota Pessoal e Aprendizados
 
-O Collecta representa um avanço importante na minha jornada como desenvolvedor fullstack.
+O Collecta representa um avanço importante na minha jornada como desenvolvedor.
 
 Durante o desenvolvimento, aprofundei conhecimentos em:
 
@@ -181,8 +191,9 @@ Durante o desenvolvimento, aprofundei conhecimentos em:
 - Organização de projetos reais
 - Dockerização de aplicações completas
 - UX orientado a produto
+- Desafios reais de deploy e adaptação para cloud
 
-O projeto ainda possui espaço para evolução, mas já cumpre seu papel como um **MVP sólido, funcional e escalável**.
+O projeto ainda possui espaço para evolução e refino, especialmente no contexto de deploy online, mas cumpre seu papel como um **MVP técnico consistente e bem arquitetado**.
 
 ---
 
@@ -194,4 +205,4 @@ O projeto ainda possui espaço para evolução, mas já cumpre seu papel como um
 ---
 
 Obrigado por visitar o projeto.  
-Sugestões e feedbacks são bem-vindos.
+Sugestões e feedbacks são sempre bem-vindos.

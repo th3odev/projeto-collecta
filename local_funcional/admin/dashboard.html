@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Admin</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="/admin/css/dashboard.css" />
+  </head>
+  <body>
+    <div id="navbar-container"></div>
+
+    <div class="container mt-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 fw-bold mb-0">Dashboard Admin - Usuários</h1>
+        <button class="btn btn-primary shadow-sm" id="refresh-btn">
+          <i class="bi bi-arrow-clockwise me-2"></i>Atualizar Lista
+        </button>
+      </div>
+
+      <div class="card shadow">
+        <div
+          class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0">Lista de Usuários</h5>
+          <div class="form-check form-switch">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="incluir-admins"
+            />
+            <label class="form-check-label text-white" for="incluir-admins"
+              >Incluir admins</label
+            >
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle" id="users-table">
+              <thead class="table-light">
+                <tr>
+                  <th>Apelido</th>
+                  <th>Email</th>
+                  <th class="text-center">Pontos</th>
+                  <th class="text-center">Status</th>
+                  <th class="text-center">Papel</th>
+                  <th class="text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module">
+      import { loadNavbar } from "/admin/components/navbar.js";
+      import {
+        adicionarPontos,
+        removerPontos,
+        banirUsuario,
+        desbanirUsuario,
+        listarUsuarios,
+      } from "/jsApiLayer/user.js";
+
+      await loadNavbar();
+
+      async function loadUsers() {
+        const incluirAdmins = document.getElementById("incluir-admins").checked;
+        try {
+          const users = await listarUsuarios(incluirAdmins);
+          const tbody = document.querySelector("#users-table tbody");
+          tbody.innerHTML = "";
+
+          if (users.length === 0) {
+            tbody.innerHTML =
+              '<tr><td colspan="6" class="text-center text-muted py-5">Nenhum usuário encontrado</td></tr>';
+            return;
+          }
+
+          users.forEach((u) => {
+            const statusBadge =
+              u.status === "ativo"
+                ? '<span class="badge bg-success">Ativo</span>'
+                : '<span class="badge bg-danger">Banido</span>';
+            const papelBadge =
+              u.papel === "admin"
+                ? '<span class="badge bg-warning text-dark">Admin</span>'
+                : '<span class="badge bg-secondary">Usuário</span>';
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                        <td><strong>${u.apelido}</strong></td>
+                        <td>${u.email}</td>
+                        <td class="text-center fw-bold">${u.pontos_atuais}</td>
+                        <td class="text-center">${statusBadge}</td>
+                        <td class="text-center">${papelBadge}</td>
+                        <td class="text-center">
+                            <div class="input-group input-group-sm d-inline-flex" style="width: 180px;">
+                                <input type="number" class="form-control pts-input" data-apelido="${
+                                  u.apelido
+                                }" min="1" placeholder="pts">
+                                <button class="btn btn-outline-success add-btn" data-apelido="${
+                                  u.apelido
+                                }" title="Adicionar pontos">+</button>
+                                <button class="btn btn-outline-danger remove-btn" data-apelido="${
+                                  u.apelido
+                                }" title="Remover pontos">-</button>
+                            </div>
+                            <button class="btn btn-sm ms-2 ${
+                              u.status === "banido"
+                                ? "btn-outline-success"
+                                : "btn-outline-danger"
+                            } ban-btn" data-apelido="${u.apelido}">
+                                ${u.status === "banido" ? "Desbanir" : "Banir"}
+                            </button>
+                        </td>
+                    `;
+            tbody.appendChild(row);
+          });
+
+          attachActionListeners();
+        } catch (e) {
+          alert("Erro ao carregar usuários: " + e.message);
+        }
+      }
+
+      function attachActionListeners() {
+        document.querySelectorAll(".add-btn").forEach((btn) => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            handlePoints(btn.dataset.apelido, true);
+          };
+        });
+        document.querySelectorAll(".remove-btn").forEach((btn) => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            handlePoints(btn.dataset.apelido, false);
+          };
+        });
+        document.querySelectorAll(".ban-btn").forEach((btn) => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const apelido = btn.dataset.apelido;
+            btn.textContent.includes("Banir") ? ban(apelido) : unban(apelido);
+          };
+        });
+      }
+
+      async function handlePoints(apelido, add) {
+        const input = document.querySelector(
+          `input.pts-input[data-apelido="${apelido}"]`
+        );
+        const qty = parseInt(input.value);
+        if (!qty || qty <= 0) return alert("Quantidade inválida");
+        if (
+          !confirm(
+            `${add ? "Adicionar" : "Remover"} ${qty} pontos de ${apelido}?`
+          )
+        )
+          return;
+        try {
+          add
+            ? await adicionarPontos(apelido, qty)
+            : await removerPontos(apelido, qty);
+          alert(`Pontos ${add ? "adicionados" : "removidos"}!`);
+          loadUsers();
+        } catch (e) {
+          alert("Erro: " + e.message);
+        }
+      }
+
+      async function ban(apelido) {
+        if (!confirm(`Banir ${apelido}?`)) return;
+        try {
+          await banirUsuario(apelido);
+          alert("Usuário banido");
+          loadUsers();
+        } catch (e) {
+          alert("Erro: " + e.message);
+        }
+      }
+
+      async function unban(apelido) {
+        if (!confirm(`Desbanir ${apelido}?`)) return;
+        try {
+          await desbanirUsuario(apelido);
+          alert("Usuário desbanido");
+          loadUsers();
+        } catch (e) {
+          alert("Erro: " + e.message);
+        }
+      }
+
+      document.getElementById("refresh-btn").onclick = loadUsers;
+      document.getElementById("incluir-admins").onchange = loadUsers;
+
+      loadUsers();
+    </script>
+  </body>
+</html>

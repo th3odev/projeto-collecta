@@ -1,0 +1,43 @@
+body {
+    background: #f5f7fa;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.table th {
+    background-color: #e9ecef;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.input-group-sm .form-control {
+    height: calc(1.5em + 0.5rem + 2px);
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+}
+
+.pts-input {
+    max-width: 80px;
+}
